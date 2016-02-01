@@ -1,0 +1,3 @@
+[submodule "TelegramBotPHP"]
+	path = TelegramBotPHP
+	url = https://github.com/Eleirbag89/TelegramBotPHP
