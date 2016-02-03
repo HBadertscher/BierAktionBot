@@ -80,7 +80,6 @@ switch($cmd)
         // First check easter eggs.
         $dbGetStore->execute(array($args));    
         while ($row = $dbGetStore->fetch()) {
-            file_put_contents("test.txt", $row['beer']);
             $content = array('chat_id' => $chat_id, 'text' => $row['beer']);
             $telegram->sendMessage($content);
             return 0;
