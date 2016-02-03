@@ -26,7 +26,7 @@ $rawstr = $telegram->Text();
 preg_match("/\/[^\s\z$]*/", $rawstr, $cmd);
 $cmd = array_values($cmd)[0];
 $args = preg_split("/\/[^\s\z$]*/", $rawstr);
-$args = trim(implode(" ", $args));
+$args = strtolower(trim(implode(" ", $args)));
 
 // Get sender info
 $vorname= $telegram->FirstName();
@@ -73,8 +73,20 @@ switch($cmd)
     case "/getStore":
     case "/getStore@BierAktionBot":
     
+        // Connect to DB
+        $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
+        $dbGetStore = $pdo->prepare("SELECT * FROM beers WHERE place = ?");
+        
+        // First check easter eggs.
+        $dbGetStore->execute(array($args));    
+        while ($row = $dbGetStore->fetch()) {
+            file_put_contents("test.txt", $row['beer']);
+            $content = array('chat_id' => $chat_id, 'text' => $row['beer']);
+            $telegram->sendMessage($content);
+            return 0;
+        }
+    
         // Fuzzy matching to get most relevant store
-        $args = strtolower($args);
         $closest = -1;
         foreach ($shops as $thisstore) {
             $lev = levenshtein($args, $thisstore);
@@ -88,11 +100,6 @@ switch($cmd)
                 $thestore = $thisstore;
             }
         }
-
-        // Connect to DB
-        $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW);
-        $dbGetStore = $pdo->prepare("SELECT * FROM beers WHERE place = ?");
-        $dbGetStore->execute(array($thestore));
 
         $msg = ucfirst($thestore) . ":\n";
         while ($row = $dbGetStore->fetch()) {
