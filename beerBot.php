@@ -101,10 +101,17 @@ switch($cmd)
                 $thestore = $thisstore;
             }
         }
-
-        $msg = ucfirst($thestore) . ":\n";
-        while ($row = $dbGetStore->fetch()) {
-            $msg = $msg . $row['beer'] . ' für ' . $row['pricenew'] . ' statt ' . $row['priceold'] . ".\n";
+        
+        if ($closest > 3) {
+            $msg = "I don't know that store.";
+        }
+        
+        else {
+            $msg = ucfirst($thestore) . ":\n";
+            $dbGetStore->execute(array($thestore));
+            while ($row = $dbGetStore->fetch()) {
+                $msg = $msg . $row['beer'] . ' für ' . $row['pricenew'] . ' statt ' . $row['priceold'] . ".\n";
+            }
         }
         $content = array('chat_id' => $chat_id, 'text' => $msg);
         $telegram->sendMessage($content);
