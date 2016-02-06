@@ -19,7 +19,7 @@ $shops = array( 0 => 'denner',
 
 // Connect to DB
 $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW);
-$dbInsert = $pdo->prepare("INSERT INTO beers (place, beer, priceold, pricenew) VALUES(:theplace, :thebeer, :theoldprice, :thenewprice)");
+$dbInsert = $pdo->prepare("INSERT INTO beers (place, beer, priceold, pricenew, easteregg) VALUES(:theplace, :thebeer, :theoldprice, :thenewprice, 0)");
 $dbDelete = $pdo->prepare("DELETE FROM beers where place = ?");
 
 // Go through all shops

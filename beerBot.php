@@ -77,10 +77,11 @@ switch($cmd)
         // Connect to DB
         $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
         $dbGetStore = $pdo->prepare("SELECT * FROM beers WHERE place = ?");
+        $dbGetEasteregg = $pdo->prepare("SELECT * FROM beers WHERE place = ? AND easteregg=1");
         
         // First check easter eggs.
-        $dbGetStore->execute(array($args));    
-        while ($row = $dbGetStore->fetch()) {
+        $dbGetEasteregg->execute(array($args));    
+        while ($row = $dbGetEasteregg->fetch()) {
             $content = array('chat_id' => $chat_id, 'text' => $row['beer']);
             $telegram->sendMessage($content);
             return 0;
