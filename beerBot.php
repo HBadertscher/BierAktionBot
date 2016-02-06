@@ -4,9 +4,10 @@
 // 01.02.2016 / Hannes Badertscher
 
 include("TelegramBotPHP/Telegram.php");
-include("../settings/db_settings.php");     // incldues $db_Host, $dbName, $dbUser and $dbPW
-include("../settings/bierbot_id.php");      // includes $bot_id
 
+$base = dirname(dirname(__FILE__)); 
+include($base . '/settings/db_settings.php');
+include($base . '/settings/bierbot_id.php');
 
 // Shops
 $shops = array( 'denner',

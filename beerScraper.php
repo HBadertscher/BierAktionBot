@@ -4,7 +4,9 @@
 // 01.02.2016 / Hannes Badertscher
 
 include("Curl.php");
-include("../settings/db_settings.php");
+
+$base = dirname(dirname(__FILE__)); 
+include($base . '/settings/db_settings.php');
 
 // Shops
 $shops = array( 0 => 'denner',
