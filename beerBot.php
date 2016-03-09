@@ -9,15 +9,6 @@ $base = dirname(dirname(__FILE__));
 include($base . '/settings/db_settings.php');
 include($base . '/settings/bierbot_id.php');
 
-// Shops
-$shops = array( 'denner',
-                'coop',
-                'coop-megastore',
-                'volg',
-                'aldi',
-                'lidl',
-                'spar');
-
 // Setup chat
 $telegram = new Telegram($bot_id);
 $chat_id = $telegram->ChatID();
@@ -54,15 +45,22 @@ switch($cmd)
 
         // Connect to DB
         $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW);
+	$shopFind = $pdo->prepare("SELECT name FROM stores WHERE 1");
         $dbGetStore = $pdo->prepare("SELECT * FROM beers WHERE place = ?");
+	$dbGetDate = $pdo->prepare("SELECT date FROM stores WHERE name = ?");
         
-        foreach ($shops as $thisstore) {
+	// Find all shops and loop through them
+	$shopFind->execute();
+        while ($thisstore = $shopFind->fetch()) {
+	    $thisstore = $thisstore[0];
             $dbGetStore->execute(array($thisstore));
+	    $dbGetDate->execute(array($thisstore));
             if ($dbGetStore->rowCount() > 0) {
                 $msg = ucfirst($thisstore) . ":\n";
                 while ($row = $dbGetStore->fetch()) {
                     $msg = $msg . $row['beer'] . ' für ' . $row['pricenew'] . ' statt ' . $row['priceold'] . ".\n";
                 }
+		$msg = $msg . 'vom ' . $dbGetDate->fetch()[0] . ".\n";
                 $content = array('chat_id' => $chat_id, 'text' => $msg);
                 $telegram->sendMessage($content);
             }
@@ -76,9 +74,11 @@ switch($cmd)
     
         // Connect to DB
         $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES 'utf8'"));
+	$shopFind = $pdo->prepare("SELECT name FROM stores WHERE 1");
         $dbGetStore = $pdo->prepare("SELECT * FROM beers WHERE place = ?");
+	$dbGetDate = $pdo->prepare("SELECT date FROM stores WHERE name = ?");
         $dbGetEasteregg = $pdo->prepare("SELECT * FROM beers WHERE place = ? AND easteregg=1");
-        
+
         // First check easter eggs.
         $dbGetEasteregg->execute(array($args));    
         while ($row = $dbGetEasteregg->fetch()) {
@@ -89,7 +89,10 @@ switch($cmd)
     
         // Fuzzy matching to get most relevant store
         $closest = -1;
-        foreach ($shops as $thisstore) {
+	$shopFind->execute();
+        while ($thisstore = $shopFind->fetch()) {
+	    $thisstore = $thisstore[0];
+
             $lev = levenshtein($args, $thisstore);
             if ($lev == 0) {
                 $thestore = $thisstore;
@@ -109,9 +112,11 @@ switch($cmd)
         else {
             $msg = ucfirst($thestore) . ":\n";
             $dbGetStore->execute(array($thestore));
+	    $dbGetDate->execute(array($thestore));
             while ($row = $dbGetStore->fetch()) {
                 $msg = $msg . $row['beer'] . ' für ' . $row['pricenew'] . ' statt ' . $row['priceold'] . ".\n";
             }
+	    $msg = $msg . 'vom ' . $dbGetDate->fetch()[0] . ".\n";
         }
         $content = array('chat_id' => $chat_id, 'text' => $msg);
         $telegram->sendMessage($content);

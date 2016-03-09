@@ -8,22 +8,19 @@ include("Curl.php");
 $base = dirname(dirname(__FILE__)); 
 include($base . '/settings/db_settings.php');
 
-// Shops
-$shops = array( 0 => 'denner',
-                1 => 'coop',
-                2 => 'coop-megastore',
-                3 => 'volg',
-                4 => 'aldi',
-                5 => 'lidl',
-                6 => 'spar');
-
 // Connect to DB
 $pdo = new PDO('mysql:host=' . $dbHost . ';dbname=' . $dbName, $dbUser, $dbPW);
+$shopFind = $pdo->prepare("SELECT name FROM stores WHERE 1");
+$shopDate = $pdo->prepare("UPDATE stores SET date=:thedate WHERE name=:theplace");
 $dbInsert = $pdo->prepare("INSERT INTO beers (place, beer, priceold, pricenew, easteregg) VALUES(:theplace, :thebeer, :theoldprice, :thenewprice, 0)");
 $dbDelete = $pdo->prepare("DELETE FROM beers where place = ?");
 
+// Find all shops
+$shopFind->execute();
+
 // Go through all shops
-foreach ($shops as $thisShop) {
+while ($thisShop = $shopFind->fetch()) {
+    $thisShop = $thisShop[0];
 
     // Delete existing actions
     $dbDelete->execute(array($thisShop));
@@ -49,8 +46,10 @@ foreach ($shops as $thisShop) {
             // Get Beer Prices
             preg_match("/<span class=\"price-new\">([^<]*)<\/span>/", $thisHtml, $regexpPriceNew);
             preg_match("/<span class=\"price-old\">([^<]*)<\/span>/", $thisHtml, $regexpPriceOld);
+            preg_match("/<span class=\"card-date\">([^<]*)<\/span>/", $thisHtml, $regexpDate);
             $parsedPriceNew = $regexpPriceNew[1];
             $parsedPriceOld = $regexpPriceOld[1];
+            $parsedDate = $regexpDate[1];
             
             if (!$parsedPriceNew) {
                 // Try some ugly hacks to recover the data
@@ -59,14 +58,15 @@ foreach ($shops as $thisShop) {
                 $parsedPriceOld = "";
             }
 
-            // Create array
+            // Save Beers
             $thisBeer = array(  'theplace' => $thisShop, 
                                 'thebeer' => $parsedBeer,
                                 'theoldprice' => $parsedPriceOld,
                                 'thenewprice' => $parsedPriceNew );
-
-            // Save to DB
             $dbInsert->execute($thisBeer);
+
+	    // Set date
+	    $shopDate->execute(array('theplace' => $thisShop, 'thedate' => $parsedDate));
         }
 
     }
