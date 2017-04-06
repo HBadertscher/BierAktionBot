@@ -36,7 +36,7 @@ while ($thisShop = $shopFind->fetch()) {
     foreach ($splittedHtml as $thisHtml) {
 
         // Find beer name
-        preg_match("/<h3 class=\"card-title\">([^<]*)<\/h3>/", $thisHtml, $regexpName);
+        preg_match("/<h3 class=\"card-title text-truncate\">([^<]*)<\/h3>/", $thisHtml, $regexpName);
         $parsedBeer = $regexpName[1];
 
         if ($parsedBeer)
